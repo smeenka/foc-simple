@@ -1,0 +1,10 @@
+[target.'cfg(all(target_arch = "arm", target_os = "none"))']
+# replace STM32F103RB with your chip as listed in `probe-rs chip list`
+runner = "probe-rs run --chip STM32F103RB"
+
+[build]
+target = "thumbv7m-none-eabi"
+#target = "thumbv6m-none-eabi"
+
+[env]
+DEFMT_LOG = "info"

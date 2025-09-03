@@ -1,0 +1,41 @@
+[package]
+authors = ["asmeenk12@gmail.com>"]
+categories = [
+  "embedded",
+  "science::robotics",
+  "no-std",
+  "no-std::no-alloc",
+]
+edition = "2021"
+keywords = ["foc", "bldc", "motor", "vector-control", "nucleo-f103_cb", "rtic_2_0"]
+license = "MIT OR Apache-2.0"
+name = "rtic-f103-cb"
+version = "0.1.0"
+
+[dependencies]
+cordic = "0.1.5"
+cortex-m = {features = ["critical-section-single-core"], version = "0.7.7"}
+cortex-m-rt = "0.7.0"
+defmt = "1.0.1"
+embassy-sync = {version = "0.7.0", features = ["defmt"]}
+embedded-hal = "0.2.6"
+fixed = "1.27.0"
+foc = "0.3.0"
+foc-simple = {features = ["rtic"], path = "../..", version = "0.1.0"}
+heapless = {version = "0.7.5", default-features = false}
+log = {version = "0.4.27"}
+panic-rtt-target = {version = "0.2.0"}
+rtic = {features = ["thumbv7-backend", "test-critical-section"], version = "2.2.0"}
+rtic-monotonics = {features = ["cortex-m-systick"], version = "2.1.0"}
+rtt-target = {version = "0.6.1", features = ["log", "defmt"]}
+stm32f1xx-hal = {features = ["rt", "rtic", "stm32f103", "medium"], version = "0.10.0"}
+
+[profile.release]
+codegen-units = 1 # Reduce number of codegen units to increase optimizations
+lto = true # Enable link-time optimization
+opt-level = 'z' # Optimize for size
+panic = 'abort' # Abort on panic
+strip = true # Strip symbols from binary*
+
+[profile.dev.package."*"]
+opt-level = "z"

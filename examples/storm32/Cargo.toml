@@ -1,0 +1,49 @@
+[package]
+authors = ["asmeenk12@gmail.com>"]
+categories = [
+  "embedded",
+  "science::robotics",
+  "no-std",
+  "no-std::no-alloc",
+]
+edition = "2021"
+keywords = ["foc", "bldc", "motor", "vector-control"]
+license = "MIT OR Apache-2.0"
+name = "storm32"
+version = "0.1.0"
+
+[dependencies]
+as5600 = {version = "0.8.0"}
+cordic = "0.1.5"
+cortex-m = {version = "0.7.6", features = ["critical-section-single-core"]}
+cortex-m-rt = "0.7.0"
+defmt = "1.0.1"
+embedded-hal = "0.2.6"
+fixed = "1.27.0"
+foc = "0.3.0"
+heapless = {version = "0.7.5", default-features = false}
+panic-probe = {version = "1.0.0", features = ["print-defmt"]}
+rtt-target = {version = "0.6.1", features = []}
+smart-leds-trait = "0.2.1"
+
+foc-simple = {features = ["embassy"], path = "../../",version = "0.1.0"}
+
+[dependencies.embassy-executor]
+features = ["defmt", "executor-thread", "arch-cortex-m"]
+version = "0.7.0"
+
+[dependencies.embassy-stm32]
+features = ["defmt", "memory-x", "stm32f103rc", "time", "time-driver-tim5"]
+version = "0.2.0"
+
+[dependencies.embassy-sync]
+features = ["defmt"]
+version = "0.7.0"
+
+[dependencies.embassy-time]
+features = ["defmt", "defmt-timestamp-uptime", "tick-hz-32_768"]
+version = "0.4.0"
+
+[dev-dependencies]
+env_logger = "0.9.0"
+log = "0.4.14"
