@@ -1,20 +1,16 @@
 # foc-simple
 
-Library for controlling blcd motors with Field Oriented Control (foc)
-The library dox c0.3.0 is used.
+Library for controlling blcd motors with Field Oriented Control (foc).
+With this library one can control blcd motors, with Embassy, or with RTIC 2.x.
 
-With this library one can control blcd motors, with embassy, with rtic.
-
-All plumbing needed to run
 
 ## Goals
 
-* Reuse of foc v0.3.0 library with same goals here
 * Exclusively use fixed-point math for all FOC calculations, using the fixed crate.
 * Generic over angle sensors, current sensors, and PWM drivers.
 * No heap allocations anywhere.
-* Can be used with rtic or  embassy
-* Application layer is fully decoupled from the foc layer. In this way the library is easy to use. (No owning issues to solve)
+* Can be used with RTIC 2.0, or Embassy,
+* Application layer is fully decoupled from the control layer. In this way the library is easy to use. (No owning issues to solve)
 * Provides a basic serial command terminal for controlling the motors
 * Multiple motors can be controlled
 * Able to do the startup calibration of the motor
@@ -30,7 +26,7 @@ The user of this library should implement these interfaces. The user will have t
 
 In this way the library can stay very generic. 
 
-Note that the current control loop, with the feedback of  current sensors, is not yet implemented.
+Note that the current control loop, with the feedback of  current sensors, is not yet fully implemented. 
 
 # Layers
 
