@@ -38,8 +38,8 @@ where
   C: FocSerial,
 {
   pub fn new(serial: C) -> Self {
-    let param_v = FocParam::new_fp(0.05, 0.05, 0.0);
-    let param_a = FocParam::new_fp(0.5, 0.001, 0.05);
+    let param_v = FocParam::new_fp(0.1, 0.0, 0.0);
+    let param_a = FocParam::new_fp(0.4, 0.0, 0.0);
     let param_t = FocParam::new_fp(1.0, 0.0, 0.0);
     FocCommand {
       serial,
@@ -93,7 +93,6 @@ where
       "tt" => self.set_torque(m, "Torque:"),
       "tl" => self.set_torque_limit(m, "Torque Limit"),
       "pa" => self.set_acceleration(m, "Speed Acceleration:"),
-      "pf" => self.set_velocity_period(m, "Velocity filter period time in ms (default 10 ms)"),
       "mi" => self.select_mode(EFocModeLocal::Idle),
       "mc" => self.select_mode(EFocModeLocal::Calibration),
       "mv" => self.select_mode(EFocModeLocal::Velocity),
@@ -188,11 +187,7 @@ where
       FocSimpleCommand::send_command(self.motor_nr, EFocCommand::TorqueLimit(f));
     }
   }
-  fn set_velocity_period(&mut self, word: &str, text: &str) {
-    if let Some(vfp) = self.parse_float(word, text) {
-      FocSimpleCommand::send_command(self.motor_nr, EFocCommand::VelocityFilterPeriod(vfp));
-    }
-  }
+
 
   fn parse_float(&mut self, word: &str, text: &str) -> Option<I16F16> {
     self.send(text);
@@ -263,13 +258,11 @@ where
     self.send("  tt<float> -- set target torque\r\n");
     self.send("  tl<float> -- set max torque limit\r\n");
     self.send("  pa<float> -- set speed acceleration in rad/sec2\r\n");
-    self.send("  pf<float> -- set velocity filter period in ms\r\n");
     self.send("  mi        -- mode idle\r\n");
     self.send("  mv        -- mode velocity\r\n");
     self.send("  mt        -- mode torque\r\n");
-    self.send("  m0        -- select all motors\r\n");
+    self.send("  m0        -- select motor 0\r\n");
     self.send("  m1        -- select motor 1\r\n");
-    self.send("  m2        -- select motor 2\r\n");
     self.send("  co        -- calibration offset. \r\n");
     self.send("  pi<0|1>   -- enable/disable interpolation. \r\n");
     self.send("  kp<float> -- pid P\r\n");

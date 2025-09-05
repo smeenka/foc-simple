@@ -106,7 +106,6 @@ where
           EFocCommand::ShaftPosition(shaft_pos) => _ = self.foc.set_position_req(shaft_pos),
           EFocCommand::Speed(speed) => self.foc.set_speed(speed),
           EFocCommand::SpeedAcc(acc) => self.foc.set_acceleration(acc),
-          EFocCommand::VelocityFilterPeriod(vfp) => self.foc.set_velocity_period(vfp),
           EFocCommand::Torque(t) => self.foc.set_torque(t),
           EFocCommand::Angle(a) => self.foc.set_angle(a),
           EFocCommand::TorqueLimit(tl) => _ = self.foc_pwm.set_torque_limit(tl),

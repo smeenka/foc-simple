@@ -16,7 +16,6 @@ pub enum EFocCommand {
   FocMode(foc::EFocMode),
   Speed(I16F16),
   SpeedAcc(I16F16),
-  VelocityFilterPeriod(I16F16),
   Angle(I16F16),
   Torque(I16F16),
   ShaftPosition(ShaftPosition),

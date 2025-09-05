@@ -16,14 +16,12 @@ pub struct FocSimple {
   target_pid: FocPid,
   // angle sensor
   shaft_position_act: ShaftPosition,
-  velocity: I16F16,        // rad / s. Filtered with a lowpass filter. as float beecause I16F16 iost too limited
-  velocity_period: I16F16, // sample period for velocity. Variable from 100 ms to 10 ms
+  velocity: I16F16,        // rad / s. Filtered with a lowpass filter
   nr_poles: usize,
   // current sensor
   // internal state
   electrical_offset: I16F16, // offset of the angle sensor with respect to the poles of the motor in radians.
   timestamp_vel: usize,
-  timestamp_acc: usize,
   speed_req: I16F16,
   speed_acc: I16F16, // in rad/100 ms
   speed_act: I16F16,
@@ -48,7 +46,6 @@ impl FocSimple {
       foc_mode: EFocMode::Idle,
       electrical_offset: I16F16::ZERO,
       velocity: I16F16::ZERO,                // in rad per second
-      velocity_period: I16F16::from_num(10), // 100 hrz
       shaft_position_act: ShaftPosition::new(),
       nr_poles,
       // current sensor
@@ -56,7 +53,6 @@ impl FocSimple {
       calibration_state: ECalibrateState::Init,
       target_pid: FocPid::new(I16F16::ONE, I16F16::ONE, I16F16::ONE),
       timestamp_vel: 0,
-      timestamp_acc: 0,
       temp: I16F16::ZERO,
       speed_req: I16F16::ZERO,
       speed_acc: I16F16::ONE / 10, // in rad/100 ms
@@ -77,20 +73,20 @@ impl FocSimple {
   /// Angle mode: set the angle in range 0 .. TAU
   /// Angle wil be set immediatly. Speed of change can be regulated with torque limit
   pub fn set_angle(&mut self, angle: I16F16) {
-    self.shaft_position_req.angle = angle;
+    if let EFocMode::Angle(_) =self.foc_mode   {
+      self.shaft_position_req.angle = angle;
+    }
   }
   /// Angle mode: set the position with rotations and angle
   /// Angle wil be set immediatly. Speed of change can be regulated with torque limit
   pub fn set_position(&mut self, position: ShaftPosition) {
-    self.shaft_position_req = position;
+    if let EFocMode::Angle(_) =self.foc_mode   {
+      self.shaft_position_req = position;
+    }
   }
   /// acceleration in rad/sec2
   pub fn set_acceleration(&mut self, acc: I16F16) {
     self.speed_acc = acc / 100; // update is done with 100 hrz
-  }
-  // set the filter period for calculating and filtering of the velocity. Default 10 (ms)
-  pub fn set_velocity_period(&mut self, period: I16F16) {
-    self.velocity_period = period;
   }
   pub fn set_electrical_offset(&mut self, offset: I16F16) {
     self.electrical_offset = offset;
@@ -130,19 +126,21 @@ impl FocSimple {
       },
       EFocMode::Angle(param) => {
         self.target_pid = FocPid::new(param.p, param.i, param.d);
+        self.target_pid.set_integral_max(I16F16::ONE * 3);
 
         self.shaft_position_req = self.shaft_position_act.clone();
       }
       EFocMode::Velocity(param) => {
         self.speed_req = I16F16::ZERO;
         self.speed_act = I16F16::ZERO;
-        self.velocity_period = I16F16::from_num(10);
         self.shaft_position_req = self.shaft_position_act.clone();
         self.target_pid = FocPid::new(param.p, param.i, param.d);
+        self.target_pid.set_integral_max(I16F16::ONE * 20);
       }
       EFocMode::Torque(param) => {
         self.torque = I16F16::ZERO;
         self.target_pid = FocPid::new(param.p, param.i, param.d);
+        self.target_pid.set_integral_max(I16F16::ONE);
       }
       EFocMode::Idle => (),
       EFocMode::Error(e) => return Err(e),
@@ -192,7 +190,13 @@ impl FocSimple {
             Ok((request_angle, I16F16::ONE / 4))
           }
           _ => {
-            let requested_torque = self.target_pid.update(self.speed_act, self.velocity);
+            // increment the requested shaft position, but only if the diff with the actual shaft position is not too big
+            let diff = self.shaft_position_req.compare(&self.shaft_position_act);
+            if diff.abs() < I16F16::PI {
+              let delta_angle = self.speed_act / 1000;
+              self.shaft_position_req.inc(delta_angle);
+            }
+            let requested_torque = self.target_pid.update_position(&self.shaft_position_req, &self.shaft_position_act);
             Ok((electrical_angle, requested_torque))
           }
         }
@@ -211,23 +215,22 @@ impl FocSimple {
   /// disable the humming of the motor in case the speed is zero (fast switchitng between 2 hall states)
   pub fn update_velocity(&mut self, ts: usize) {
     // update the actual requested speed  with a fixed frequency of preferable 100 hz
-    self.update_speed(ts);
+    self.update_speed();
     let delta_ts = ts - self.timestamp_vel;
-    if delta_ts >= self.velocity_period {
+    if delta_ts > 0 {
       // update the velocity with shifting frequency: the lower the requested speed, the lower the filter frequency
       self.timestamp_vel = ts;
       let delta_sec = I16F16::from_num(delta_ts) / 1_000;
       let position_delta = self.shaft_position_act.delta();
       let velocity_current = position_delta / delta_sec; // in rad per second
+                                                         // filter the velocity with a low pass filter
+
       self.velocity = (velocity_current + 19 * self.velocity) / 20;
     }
   }
 
   #[inline]
-  fn update_speed(&mut self, ts: usize) {
-    let delta_ts = ts - self.timestamp_acc;
-    if delta_ts >= 10 {
-      self.timestamp_acc = ts;
+  fn update_speed(&mut self) {
       let req = self.speed_req;
       if self.speed_acc == 0 {
         self.speed_act = req;
@@ -246,12 +249,6 @@ impl FocSimple {
         } // do nothing if equal
         self.speed_act = act;
       }
-      let req_abs = req.abs();
-      self.velocity_period = I16F16::from_num(10);
-      if req_abs < 90 {
-        self.velocity_period += I16F16::from_num(90) - req_abs;
-      }
-    }
   }
 
   /// Calculate the direction of the sensor in relation to the direction of the motor

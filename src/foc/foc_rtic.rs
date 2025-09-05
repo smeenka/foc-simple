@@ -113,7 +113,6 @@ where
           EFocCommand::Torque(t) => self.foc.set_torque(t),
           EFocCommand::Angle(a) => self.foc.set_angle(a),
           EFocCommand::TorqueLimit(tl) => self.foc_pwm.set_torque_limit(tl),
-          EFocCommand::VelocityFilterPeriod(vfp) => self.foc.set_velocity_period(vfp),
           EFocCommand::ErrorCount => {
             rprintln!("Total error count:{}", self.error_count);
             self.error_count = 0
