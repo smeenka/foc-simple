@@ -6,7 +6,7 @@ Tests are done with 2 boards
 
 # Storm32 
 
-Connected to this board are 2 2804H small Gimbal motors. For feedback an as5600 magnetic encoder board is mounded on the back of the motor. 
+Connected to this board are 2 2804H small Gimbal motors. For feedback an as5600 magnetic encoder board is mounted on the back of the motor. 
 
 This board can be used as is. No modifications needed.
 For the shell tests one needs to solder a hc08 bluetooth module on the back.
@@ -16,7 +16,7 @@ Sensorless mode is tested here.
 
 The right motor in the test does have an AS5600 angle sensor,connected via an I2C.
 
-Note: This setup is not stable for me, possible due to cheap Chinese storm32 board. The i2c bus does get blocked after a while. I am working on a solution with does measure the digital output pulse length from the out pin of the AS5600.
+Note: This setup is not stable for me, possible due to cheap Chinese storm32 board. The i2c bus does get blocked after a while. I am working on a solution wich does measure the digital output pulse length from the out pin of the AS5600.
 
 
 ## Nucleo nucleo-f103rb
@@ -37,6 +37,13 @@ Now all hall sensors can be handled by one interrupt (EXTI15_10). This is import
 
 The push button on the nucleo board can be used now (connected to PC13), if needed. In RTIC it will generate the EXTI15_10 interupt.
 
+## foc_impl
+
+The module foc_impl in the application directory provides all implementations for the traits, as needed for the library. 
+
+This can be used as example and starting point how to implement these interfaces.
+
+
 ## Build and run
 
 To buils an run an example in the src/bin folder one has to:
@@ -54,3 +61,11 @@ To buils an run an example in the src/bin folder one has to:
 |test-velocity|Test FOC in velocity mode with angle sensor feedback| 
 test-shell-sec|Test the command line user interface, with no FOC configured, and loaded| Does show that the user interface can even run without any active FOC. User interface is fully decoupled from ccontrol layer
 |test-shell|Test the foc library with the command line user interface|Full operation of foc motors via the serial command line interface|
+
+## Embassy compared to RTIC
+
+RTIC 2.0 seems to me more suited for the foc application than Embassy, because different parts of the application can run on on different priority levels.
+
+Current the Embassy example implementation has a big flaw: the serial communication is not buffered, and interfering with the motor operation. Especially the command **help** does interfere, as it does printout the long help text.
+
+The RTIC implementation does use the same command interpretator, but does not has this flaw, as the foc control layer runs on a higer priority then the command interpretator.
