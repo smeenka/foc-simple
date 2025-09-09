@@ -47,7 +47,14 @@ The library does contain the following layers
 * An async wrapping layer for rtic 2.0
 * Examples for controlling motors, with embassy or rtic, with 2 different platforms (nucleo-f103rb and storm32). Examples are available in the github repository
 
+# Calibration
 
+Calibration should be done before each startup of the application.
+Calibration parameters (direction and electrical offset) can be discovered automatically. or set in the application, if known.
+
+The discoverd values can be observed in the RTT channel.
+
+The command menu has an entry to set the calibration offset. Use this function with care, only for test cases. If set incorrectly it can damage the motor.
 
 ## Buiding this library
 

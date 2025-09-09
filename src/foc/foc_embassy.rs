@@ -1,4 +1,5 @@
 use crate::foc::MAX_MOTOR_NR;
+use crate::foc::COMMAND_CHANNEL_SIZE;
 use embassy_futures::select::{select4, Either4};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, signal::Signal};
 use embassy_time::{Instant, Ticker};
@@ -10,7 +11,7 @@ use crate::{
   EFocAngle, EFocAngleSensor, EFocCommand, EFocCurrentSensor, SensorAngle, SensorCurrent,
 };
 
-static CHANNEL_COMMANDS: [Channel<CriticalSectionRawMutex, EFocCommand, 10>; MAX_MOTOR_NR] = [Channel::new(), Channel::new()];
+static CHANNEL_COMMANDS: [Channel<CriticalSectionRawMutex, EFocCommand, COMMAND_CHANNEL_SIZE>; MAX_MOTOR_NR] = [Channel::new(), Channel::new()];
 pub static HALL_ANGLES: [Signal<CriticalSectionRawMutex, I16F16>; MAX_MOTOR_NR] = [Signal::new(), Signal::new()];
 
 pub struct FocEmbassy<A: SensorAngle, C: SensorCurrent, D: PwmDriver> {

@@ -1,4 +1,3 @@
-pub mod foc_current;
 pub mod foc_hall_sensor;
 pub mod foc_pwm;
 pub mod foc_simple;

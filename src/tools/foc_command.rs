@@ -51,7 +51,6 @@ where
       motor_nr: 0,
     }
   }
-  /// the task will become the owner of Self
   pub async fn task(&mut self) {
     self.send("\r\nStarting Foc Serial Parser task\r\n");
     self.help();
@@ -124,12 +123,8 @@ where
     let mut msg: String<10> = String::new();
     core::write!(&mut msg, "{}", data).unwrap();
     self.send(&msg);
-  } /*
-    pub fn send_I16F16(&mut self, data: I16F16) {
-      let mut msg: String<20> = String::new();
-      core::write!(&mut msg, "{}", data).unwrap();
-      self.send(&msg);
-    }*/
+  }
+
   pub fn send_i16f16(&mut self, data: I16F16) {
     let mut msg: String<20> = String::new();
     //let data: f32 = data.to_num();
@@ -258,13 +253,13 @@ where
     self.send("  tt<float> -- set target torque\r\n");
     self.send("  tl<float> -- set max torque limit\r\n");
     self.send("  pa<float> -- set speed acceleration in rad/sec2\r\n");
+    self.send("  mc        -- mode calibration. Start with this function!\r\n");
     self.send("  mi        -- mode idle\r\n");
     self.send("  mv        -- mode velocity\r\n");
     self.send("  mt        -- mode torque\r\n");
     self.send("  m0        -- select motor 0\r\n");
     self.send("  m1        -- select motor 1\r\n");
-    self.send("  co        -- calibration offset. \r\n");
-    self.send("  pi<0|1>   -- enable/disable interpolation. \r\n");
+    self.send("  co        -- calibration offset. Only for test cases!\r\n");
     self.send("  kp<float> -- pid P\r\n");
     self.send("  ki<float> -- pid I\r\n");
     self.send("  kd<float> -- pid D\r\n");

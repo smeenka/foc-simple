@@ -72,6 +72,8 @@ where
   }
 
   /// Returns a value between -1 and 1 for each channel.
+  /// The content of this function is copied from the foc library, v0.3.0
+  /// because it was impossible to reuse the code
   fn modulate(&self, value: TwoPhaseReferenceFrame) -> [I16F16; 3] {
     match self.modulation {
       EModulation::Sinusoidal => {

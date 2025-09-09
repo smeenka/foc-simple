@@ -13,7 +13,7 @@ keywords = ["foc", "bldc", "motor", "vector-control"]
 license = "MIT OR Apache-2.0"
 name = "foc-simple"
 repository = "https://github.com/smeenka/foc-simple"
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
 cordic = "0.1.5"

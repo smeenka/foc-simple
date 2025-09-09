@@ -20,7 +20,7 @@ impl ShaftPosition {
       inversed: false,
     }
   }
-  /// mark the sensor for this motor is inversed. Can only be set once, never reset anymore
+  /// mark the sensor for this motor as inversed. Can only be set once, never reset anymore
   pub fn mark_inversed(&mut self) {
     self.inversed = true;
   }

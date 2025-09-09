@@ -12,11 +12,11 @@ pub struct FocSimple {
   shaft_position_req: ShaftPosition,
   foc_mode: EFocMode,
   calibration_state: ECalibrateState,
-  torque: I16F16, // target for velocity in rad/s, angle in rad, or torque in %
+  torque: I16F16, // target for torque in %
   target_pid: FocPid,
   // angle sensor
   shaft_position_act: ShaftPosition,
-  velocity: I16F16,        // rad / s. Filtered with a lowpass filter
+  velocity: I16F16,        // rad / s. Filtered with a lowpass filter of ca 10 Hrz
   nr_poles: usize,
   // current sensor
   // internal state
@@ -42,7 +42,7 @@ impl FocSimple {
     FocSimple {
       // user request parameters
       shaft_position_req: ShaftPosition::new(),
-      torque: I16F16::ZERO,
+      torque: I16F16::ONE/4,
       foc_mode: EFocMode::Idle,
       electrical_offset: I16F16::ZERO,
       velocity: I16F16::ZERO,                // in rad per second
@@ -60,12 +60,13 @@ impl FocSimple {
     }
   }
 
-  /// Set the speed in range -100 .. 100 rad/sec
+  /// Velocity mode: Set the speed in rad/sec, positive or negative
   /// Speed wil increment or decrement until this target value is reached
   pub fn set_speed(&mut self, speed: I16F16) {
     self.speed_req = speed;
   }
   /// Torque mode: set the torque in range -1 ..1
+  /// Calibration mode: Set the torque for calibration
   /// Torque is set immediatly
   pub fn set_torque(&mut self, torque: I16F16) {
     self.torque = torque;
@@ -77,7 +78,7 @@ impl FocSimple {
       self.shaft_position_req.angle = angle;
     }
   }
-  /// Angle mode: set the position with rotations and angle
+  /// Angle mode: set the position with shaft position. Can be positive or negative
   /// Angle wil be set immediatly. Speed of change can be regulated with torque limit
   pub fn set_position(&mut self, position: ShaftPosition) {
     if let EFocMode::Angle(_) =self.foc_mode   {
@@ -88,6 +89,8 @@ impl FocSimple {
   pub fn set_acceleration(&mut self, acc: I16F16) {
     self.speed_acc = acc / 100; // update is done with 100 hrz
   }
+  /// only to be used for test function. Be carefull with setting the value manually!
+  /// Incorrect use can damage the motor.
   pub fn set_electrical_offset(&mut self, offset: I16F16) {
     self.electrical_offset = offset;
   }
@@ -208,17 +211,13 @@ impl FocSimple {
     }
   }
 
-  /// calculate the velocity with a lower speed than the angle.
-  /// This function should be called each 10 ms.
-  /// on speed request higher than 100 rad / sec the low pass filter frequency is 10 hrz
-  /// If the speed gets lower, the low pass frequency drops dynamically to 1 hrz to enable very low speeds, and to
-  /// disable the humming of the motor in case the speed is zero (fast switchitng between 2 hall states)
+  /// calculate the velocity. This function should be called each 10 ms.
+  /// The low pass filter frequency is 10 hrz
   pub fn update_velocity(&mut self, ts: usize) {
     // update the actual requested speed  with a fixed frequency of preferable 100 hz
     self.update_speed();
     let delta_ts = ts - self.timestamp_vel;
     if delta_ts > 0 {
-      // update the velocity with shifting frequency: the lower the requested speed, the lower the filter frequency
       self.timestamp_vel = ts;
       let delta_sec = I16F16::from_num(delta_ts) / 1_000;
       let position_delta = self.shaft_position_act.delta();
@@ -255,22 +254,18 @@ impl FocSimple {
   /// If needed invert the direction of the sensor
   /// Returned is a tuple of electrical angle and torque
   fn do_calibration(&mut self) -> Result<(I16F16, I16F16)> {
-    let torque = I16F16::ONE / 2;
     let req = self.shaft_position_req;
     let act = self.shaft_position_act;
 
-    // current electrical offset, limit to 0 .. TAU
-
     match self.calibration_state {
       ECalibrateState::Init => {
-        // set the requested shaft beyond the start position (0,0)
         self.shaft_position_req.reset();
         self.shaft_position_act.reset();
         self.electrical_offset = I16F16::ZERO;
         self.calibration_state = ECalibrateState::FindDirection
       }
       ECalibrateState::FindDirection => {
-        // state end condition after exact 2 electrical turns + 3/4 TAU
+        // state end condition after exact 1 electrical turn
         if req.rotations > 1 {
           // check motor did move
           if act.rotations == 0 && act.angle == I16F16::ZERO {
@@ -289,7 +284,7 @@ impl FocSimple {
             self.calibration_state = ECalibrateState::FindOffset;
           }
         } else {
-          // rotate with 1 rad/sec positive
+          // rotate with 10 rad/sec positive
           self.shaft_position_req.inc(I16F16::from_num(0.01));
         }
       }
@@ -303,7 +298,7 @@ impl FocSimple {
           self.calibration_state = ECalibrateState::ReturnToStart;
           rprintln!("Electrical offset:{}", self.electrical_offset);
         } else {
-          // rotate with 1 rad/sec positive
+          // rotate with 10 rad/sec positive
           self.shaft_position_req.inc(I16F16::from_num(0.01));
         }
       }
@@ -313,11 +308,11 @@ impl FocSimple {
           self.foc_mode = EFocMode::Idle;
           rprintln!("Calibraton finished");
         } else {
-          // rotate with 1 rad/sec negative
+          // rotate with 10 rad/sec negative
           self.shaft_position_req.inc(I16F16::from_num(-0.01));
         }
       }
     }
-    Ok((self.shaft_position_req.get_angle(), torque))
+    Ok((self.shaft_position_req.get_angle(), self.torque))
   }
 }

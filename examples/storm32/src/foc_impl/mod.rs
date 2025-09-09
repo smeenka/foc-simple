@@ -66,19 +66,7 @@ impl SensorAngle for SensorAngleImpl {
         }
     }
 }
-struct SensorAnalogue {}
 
-impl SensorAnalogue {
-    fn new() -> Self {
-        SensorAnalogue {}
-    }
-}
-
-impl SensorAngle for SensorAnalogue {
-    fn get_angle(&mut self) -> Result<I16F16> {
-        Ok(I16F16::ZERO)
-    }
-}
 // dummy implementation
 pub struct SensorCurrentImpl {}
 

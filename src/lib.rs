@@ -1,4 +1,3 @@
-//! Ebus Electronics copyright 2021
 #![no_std]
 #![allow(dead_code)]
 use core::future::Future;
@@ -70,7 +69,7 @@ pub enum EFocAngle {
 
 // The trait for getting the current from the motor
 pub trait SensorCurrent {
-  /// Retrieve the current from the sensor. Do time related calculations specific for the implementation
+  /// Retrieve the current from the sensor. 
   /// Return on success the current array from the sensor, in amperes
   /// In case 2 phases are sample set the third phase to zero here
   fn get_current(&mut self) -> Result<[I16F16; 3]>;
