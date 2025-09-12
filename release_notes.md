@@ -11,7 +11,7 @@
 * Updated README.md
 * Made a comment in code  that part of the code in foc_pwm is copied from library foc v0.3.0
 
-## Version 0.1.2 dd 2025-09-09
+## Version 0.1.2 dd 2025-09-12
 
 * Calibration can be done at any time with about same result
 * Torque used for calibration is default 0.25, but can be set before calibration with the tt command
