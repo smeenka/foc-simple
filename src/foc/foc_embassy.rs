@@ -1,5 +1,5 @@
-use crate::foc::MAX_MOTOR_NR;
 use crate::foc::COMMAND_CHANNEL_SIZE;
+use crate::foc::MAX_MOTOR_NR;
 use embassy_futures::select::{select4, Either4};
 use embassy_sync::{blocking_mutex::raw::CriticalSectionRawMutex, channel::Channel, signal::Signal};
 use embassy_time::{Instant, Ticker};
@@ -11,7 +11,8 @@ use crate::{
   EFocAngle, EFocAngleSensor, EFocCommand, EFocCurrentSensor, SensorAngle, SensorCurrent,
 };
 
-static CHANNEL_COMMANDS: [Channel<CriticalSectionRawMutex, EFocCommand, COMMAND_CHANNEL_SIZE>; MAX_MOTOR_NR] = [Channel::new(), Channel::new()];
+static CHANNEL_COMMANDS: [Channel<CriticalSectionRawMutex, EFocCommand, COMMAND_CHANNEL_SIZE>; MAX_MOTOR_NR] =
+  [Channel::new(), Channel::new()];
 pub static HALL_ANGLES: [Signal<CriticalSectionRawMutex, I16F16>; MAX_MOTOR_NR] = [Signal::new(), Signal::new()];
 
 pub struct FocEmbassy<A: SensorAngle, C: SensorCurrent, D: PwmDriver> {
@@ -34,7 +35,13 @@ where
   C: SensorCurrent,
   D: PwmDriver,
 {
-  pub fn new(motor_nr: usize, foc: FocSimple, foc_pwm: FocPwm<D>, hs_ticker: Ticker, ls_ticker: Ticker) -> FocEmbassy<A, C, D> {
+  pub fn new(
+    motor_nr: usize,
+    foc: FocSimple,
+    foc_pwm: FocPwm<D>,
+    hs_ticker: Ticker,
+    ls_ticker: Ticker,
+  ) -> FocEmbassy<A, C, D> {
     FocEmbassy {
       motor_nr,
       foc,
@@ -47,7 +54,6 @@ where
 
       error_count: 0,
       hall_angle: I16F16::ZERO,
-
     }
   }
   /// set the sensor with an actual implementation of AngleSensor
@@ -74,9 +80,7 @@ where
       )
       .await
       {
-        Either4::First(a) => {
-          self.hall_angle = a
-        }
+        Either4::First(a) => self.hall_angle = a,
         Either4::Second(_) => {
           let angle = match &mut self.angle_sensor {
             EFocAngleSensor::SensorLess => EFocAngle::SensorLess,
@@ -88,7 +92,7 @@ where
               }
               Ok(a) => EFocAngle::SensorValue(a),
             },
-            EFocAngleSensor::HallSensor => EFocAngle::SensorValue(self.hall_angle), 
+            EFocAngleSensor::HallSensor => EFocAngle::SensorValue(self.hall_angle),
           };
           match self.foc.update(angle) {
             Ok((angle, torque)) => _ = self.foc_pwm.update(angle, torque, None),

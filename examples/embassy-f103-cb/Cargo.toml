@@ -10,7 +10,7 @@ edition = "2021"
 keywords = ["foc", "bldc", "motor", "vector-control", "nucleo-f103_cb"]
 license = "MIT OR Apache-2.0"
 name = "embassy-f103-cb"
-version = "0.1.0"
+version = "0.1.2"
 
 [dependencies]
 as5600 = {version = "0.8.0"}
@@ -21,7 +21,7 @@ defmt = "1.0.1"
 embedded-hal = "0.2.6"
 fixed = "1.27.0"
 foc = "0.3.0"
-foc-simple = {path = "../../", version = "0.1.0", features = ["embassy"]}
+foc-simple = {path = "../../", version = "0.1.2", features = ["embassy"]}
 heapless = {version = "0.7.5", default-features = false}
 log = {version = "0.4.27"}
 panic-probe = {version = "1.0.0", features = []}

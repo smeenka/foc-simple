@@ -20,9 +20,9 @@ impl ShaftPosition {
       inversed: false,
     }
   }
-  /// mark the sensor for this motor as inversed. Can only be set once, never reset anymore
-  pub fn mark_inversed(&mut self) {
-    self.inversed = true;
+  /// mark the sensor for this motor as inversed or not inversed.
+  pub fn set_inversed(&mut self, inv: bool) {
+    self.inversed = inv;
   }
   pub fn is_inversed(&self) -> bool {
     self.inversed
@@ -93,10 +93,13 @@ impl ShaftPosition {
     rotations_diff + angle_diff
   }
 
-
   /// update the shaft angle with the new measured angle. Update the rotation, and check if there is a jump
   pub fn update_shaft_angle(&mut self, new_angle: I16F16) {
-    let angle = if self.inversed { I16F16::TAU - new_angle } else { new_angle };
+    let angle = if self.inversed {
+      I16F16::TAU - new_angle
+    } else {
+      new_angle
+    };
     let delta_angle = angle - self.angle;
     self.angle = angle;
     self.jump = false;

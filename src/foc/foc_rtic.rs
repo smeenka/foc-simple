@@ -11,7 +11,8 @@ use crate::{
   EFocAngle, EFocAngleSensor, EFocCommand, SensorAngle, SensorCurrent,
 };
 
-static CHANNEL_COMMANDS: [Channel<CriticalSectionRawMutex, EFocCommand, COMMAND_CHANNEL_SIZE>; MAX_MOTOR_NR] = [Channel::new(), Channel::new()];
+static CHANNEL_COMMANDS: [Channel<CriticalSectionRawMutex, EFocCommand, COMMAND_CHANNEL_SIZE>; MAX_MOTOR_NR] =
+  [Channel::new(), Channel::new()];
 pub static HALL_ANGLES: [Signal<CriticalSectionRawMutex, I16F16>; MAX_MOTOR_NR] = [Signal::new(), Signal::new()];
 pub static SIGNAL_1MS: [Signal<CriticalSectionRawMutex, ()>; MAX_MOTOR_NR] = [Signal::new(), Signal::new()];
 pub static SIGNAL_10MS: [Signal<CriticalSectionRawMutex, usize>; MAX_MOTOR_NR] = [Signal::new(), Signal::new()];
@@ -59,7 +60,14 @@ where
   pub async fn task(&mut self) {
     let nr = self.motor_nr;
     loop {
-      match select4(HALL_ANGLES[nr].wait(), SIGNAL_1MS[nr].wait(), SIGNAL_10MS[nr].wait(), CHANNEL_COMMANDS[nr].receive()).await {
+      match select4(
+        HALL_ANGLES[nr].wait(),
+        SIGNAL_1MS[nr].wait(),
+        SIGNAL_10MS[nr].wait(),
+        CHANNEL_COMMANDS[nr].receive(),
+      )
+      .await
+      {
         Either4::First(a) => {
           match self.foc.update(EFocAngle::SensorValue(a)) {
             Ok((angle, torque)) => {

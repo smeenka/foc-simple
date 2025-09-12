@@ -1,5 +1,5 @@
 [workspace]
-members = ["embassy-f103-cb", "storm32", "rtic-f103-cb"]
+members = ["embassy-f103-cb", "storm32", "rtic-f103-cb", "rtic-storm32"]
 resolver = "3"
 
 [profile.release]

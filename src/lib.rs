@@ -4,8 +4,8 @@ use core::future::Future;
 
 use fixed::types::I16F16;
 
-use crate::tools::shaft_position::ShaftPosition;
 pub use crate::tools::foc_command::FocCommand;
+use crate::tools::shaft_position::ShaftPosition;
 
 pub mod foc;
 pub mod tools;
@@ -59,7 +59,6 @@ pub enum EFocCurrentSensor<C> {
   ThreePhase(C), // contains the implementation of the SensorCurrent Trait
 }
 
-
 #[derive(Clone, Debug, Copy)]
 pub enum EFocAngle {
   SensorLess,
@@ -69,7 +68,7 @@ pub enum EFocAngle {
 
 // The trait for getting the current from the motor
 pub trait SensorCurrent {
-  /// Retrieve the current from the sensor. 
+  /// Retrieve the current from the sensor.
   /// Return on success the current array from the sensor, in amperes
   /// In case 2 phases are sample set the third phase to zero here
   fn get_current(&mut self) -> Result<[I16F16; 3]>;
@@ -101,7 +100,7 @@ impl FocParam {
     }
   }
   pub fn new(p: I16F16, i: I16F16, d: I16F16) -> Self {
-    FocParam {p,i,d}
+    FocParam { p, i, d }
   }
   pub fn set_p(&mut self, p: I16F16) {
     self.p = p

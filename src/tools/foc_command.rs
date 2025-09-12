@@ -143,10 +143,18 @@ where
       EFocModeLocal::Idle => self.send("Idle\r\n"),
     };
     match mode {
-      EFocModeLocal::Angle => FocSimpleCommand::send_command(self.motor_nr, EFocCommand::FocMode(EFocMode::Angle(self.param_a))),
-      EFocModeLocal::Velocity => FocSimpleCommand::send_command(self.motor_nr, EFocCommand::FocMode(EFocMode::Velocity(self.param_v))),
-      EFocModeLocal::Torque => FocSimpleCommand::send_command(self.motor_nr, EFocCommand::FocMode(EFocMode::Torque(self.param_t))),
-      EFocModeLocal::Calibration => FocSimpleCommand::send_command(self.motor_nr, EFocCommand::FocMode(EFocMode::Calibration(None))),
+      EFocModeLocal::Angle => {
+        FocSimpleCommand::send_command(self.motor_nr, EFocCommand::FocMode(EFocMode::Angle(self.param_a)))
+      }
+      EFocModeLocal::Velocity => {
+        FocSimpleCommand::send_command(self.motor_nr, EFocCommand::FocMode(EFocMode::Velocity(self.param_v)))
+      }
+      EFocModeLocal::Torque => {
+        FocSimpleCommand::send_command(self.motor_nr, EFocCommand::FocMode(EFocMode::Torque(self.param_t)))
+      }
+      EFocModeLocal::Calibration => {
+        FocSimpleCommand::send_command(self.motor_nr, EFocCommand::FocMode(EFocMode::Calibration(None)))
+      }
       EFocModeLocal::Idle => FocSimpleCommand::send_command(self.motor_nr, EFocCommand::FocMode(EFocMode::Idle)),
     };
   }
@@ -182,7 +190,6 @@ where
       FocSimpleCommand::send_command(self.motor_nr, EFocCommand::TorqueLimit(f));
     }
   }
-
 
   fn parse_float(&mut self, word: &str, text: &str) -> Option<I16F16> {
     self.send(text);
@@ -240,7 +247,10 @@ where
         self.send_i16f16(f);
         self.send_nl();
         self.param_c = Some(CalParams::new(EDir::Cw, I16F16::from_num(f)));
-        FocSimpleCommand::send_command(self.motor_nr, EFocCommand::FocMode(EFocMode::Calibration(self.param_c.clone())));
+        FocSimpleCommand::send_command(
+          self.motor_nr,
+          EFocCommand::FocMode(EFocMode::Calibration(self.param_c.clone())),
+        );
       }
     }
   }

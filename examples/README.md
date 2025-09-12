@@ -8,15 +8,17 @@ Tests are done with 2 boards
 
 Connected to this board are 2 2804H small Gimbal motors. For feedback an as5600 magnetic encoder board is mounted on the back of the motor. 
 
-This board can be used as is. No modifications needed.
 For the shell tests one needs to solder a hc08 bluetooth module on the back.
 
-The left motor in the test is connected without angle sensor. 
-Sensorless mode is tested here.
+In folder rtic-storm32 there is one test for using an AS5600 angle sensor in pwm mode. How to program the AS 5600 so that it does output the pwm is not in scope here.
 
-The right motor in the test does have an AS5600 angle sensor,connected via an I2C.
+Note that for this test the hc08 bluetooth module should NOT be mounted, as the TX of of the hc08 would interfere. The storm32 board does not have enough resourses to use both.
 
-Note: This setup is not stable for me, possible due to cheap Chinese storm32 board. The i2c bus does get blocked after a while. I am working on a solution wich does measure the digital output pulse length from the out pin of the AS5600.
+In the embassy folder (storm32) the left motor is tested in sensorless mode.
+
+The right motor in the test does have an AS5600 angle sensor,connected via I2C.
+
+Note: This setup is not stable for me, possible due to cheap Chinese storm32 board. The i2c bus does get blocked after a while. 
 
 
 ## Nucleo nucleo-f103rb
@@ -58,6 +60,7 @@ To buils an run an example in the src/bin folder one has to:
 |  --- | --- | ---  |
 |test-serial|Basic low level test of serial  port.| Only needed to check serial communication|
 |test-pwm|Test the FocPwm object | Only the last step in foc flow is tested: the current loop and the PWM generation from the desired torque and flux  |
+|test-angle-pwm|Test angle sensor in PWM mode|In folder  rtic-storm32|
 |test-velocity|Test FOC in velocity mode with angle sensor feedback| 
 test-shell-sec|Test the command line user interface, with no FOC configured, and loaded| Does show that the user interface can even run without any active FOC. User interface is fully decoupled from ccontrol layer
 |test-shell|Test the foc library with the command line user interface|Full operation of foc motors via the serial command line interface|

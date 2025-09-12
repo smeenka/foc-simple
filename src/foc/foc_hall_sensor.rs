@@ -1,9 +1,9 @@
-use fixed::types::I16F16;
-use rtt_target::rprintln;
-use crate::foc::MAX_MOTOR_NR;
 use crate::foc::EDir;
+use crate::foc::MAX_MOTOR_NR;
 use crate::EFocSimpleError;
 use crate::Result;
+use fixed::types::I16F16;
+use rtt_target::rprintln;
 
 // lookup table from the raw hall state (1-3-2-6-4-5  as index to get the hall state )
 //                                  0  1  2  3  4  5  6  7

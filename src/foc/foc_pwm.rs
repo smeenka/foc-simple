@@ -47,8 +47,8 @@ where
   pub fn update(&mut self, angle: I16F16, torque: I16F16, current: Option<(I16F16, I16F16, I16F16)>) -> Result<()> {
     let (sin_angle, cos_angle) = cordic::sin_cos(angle);
     match current {
-     None =>  self.update_sin_cos(sin_angle, cos_angle, torque, I16F16::ZERO),
-     Some(_) => Err(EFocSimpleError::NotImplementedYet)
+      None => self.update_sin_cos(sin_angle, cos_angle, torque, I16F16::ZERO),
+      Some(_) => Err(EFocSimpleError::NotImplementedYet),
     }
   }
 
@@ -57,7 +57,11 @@ where
   pub fn update_sin_cos(&mut self, sin_angle: I16F16, cos_angle: I16F16, v_q: I16F16, v_d: I16F16) -> Result<()> {
     let torque = v_q.clamp(self.torque_limit_neg, self.torque_limit_pos);
     // Inverse Park transform
-    let orthogonal_voltage = park_clarke::inverse_park(cos_angle, sin_angle, park_clarke::RotatingReferenceFrame { d: v_d, q: torque });
+    let orthogonal_voltage = park_clarke::inverse_park(
+      cos_angle,
+      sin_angle,
+      park_clarke::RotatingReferenceFrame { d: v_d, q: torque },
+    );
     // convert to the pwm values, in range -1 .. 1
     let vectors = self.modulate(orthogonal_voltage);
     // convert to range 1 .. max_pwm value for setting the duty cycles on the timers

@@ -16,7 +16,7 @@ pub struct FocSimple {
   target_pid: FocPid,
   // angle sensor
   shaft_position_act: ShaftPosition,
-  velocity: I16F16,        // rad / s. Filtered with a lowpass filter of ca 10 Hrz
+  velocity: I16F16, // rad / s. Filtered with a lowpass filter of ca 10 Hrz
   nr_poles: usize,
   // current sensor
   // internal state
@@ -42,10 +42,10 @@ impl FocSimple {
     FocSimple {
       // user request parameters
       shaft_position_req: ShaftPosition::new(),
-      torque: I16F16::ONE/4,
+      torque: I16F16::ZERO,
       foc_mode: EFocMode::Idle,
       electrical_offset: I16F16::ZERO,
-      velocity: I16F16::ZERO,                // in rad per second
+      velocity: I16F16::ZERO, // in rad per second
       shaft_position_act: ShaftPosition::new(),
       nr_poles,
       // current sensor
@@ -74,14 +74,14 @@ impl FocSimple {
   /// Angle mode: set the angle in range 0 .. TAU
   /// Angle wil be set immediatly. Speed of change can be regulated with torque limit
   pub fn set_angle(&mut self, angle: I16F16) {
-    if let EFocMode::Angle(_) =self.foc_mode   {
+    if let EFocMode::Angle(_) = self.foc_mode {
       self.shaft_position_req.angle = angle;
     }
   }
   /// Angle mode: set the position with shaft position. Can be positive or negative
   /// Angle wil be set immediatly. Speed of change can be regulated with torque limit
   pub fn set_position(&mut self, position: ShaftPosition) {
-    if let EFocMode::Angle(_) =self.foc_mode   {
+    if let EFocMode::Angle(_) = self.foc_mode {
       self.shaft_position_req = position;
     }
   }
@@ -120,12 +120,17 @@ impl FocSimple {
       EFocMode::Calibration(param) => match param {
         Some(p) => {
           self.electrical_offset = p.zero;
-          if p.dir == EDir::Ccw {
-            self.shaft_position_act.mark_inversed();
-          }
+          self.shaft_position_act.set_inversed(p.dir == EDir::Ccw);
           self.foc_mode = EFocMode::Idle;
         }
-        None => self.calibration_state = ECalibrateState::Init,
+        None => {
+          self.electrical_offset = I16F16::ZERO;
+          self.shaft_position_act.set_inversed(false);
+          self.calibration_state = ECalibrateState::Init;
+          if self.torque < I16F16::ONE/10 {
+            self.torque = I16F16::ONE/4;
+          }
+        }
       },
       EFocMode::Angle(param) => {
         self.target_pid = FocPid::new(param.p, param.i, param.d);
@@ -162,7 +167,9 @@ impl FocSimple {
         self.shaft_position_act.update_shaft_angle(angle);
         I16F16::from_num(self.nr_poles) * self.shaft_position_act.angle - self.electrical_offset
       }
-      EFocAngle::Interpolate => I16F16::from_num(self.nr_poles) * self.shaft_position_act.angle - self.electrical_offset,
+      EFocAngle::Interpolate => {
+        I16F16::from_num(self.nr_poles) * self.shaft_position_act.angle - self.electrical_offset
+      }
     };
     match self.foc_mode {
       EFocMode::Idle => Ok((electrical_angle, I16F16::ZERO)),
@@ -177,7 +184,9 @@ impl FocSimple {
           EFocAngle::SensorLess => Err(EFocSimpleError::NoAngleSensor),
           _ => {
             // Compare actual position with requested
-            let torque = self.target_pid.update_position(&self.shaft_position_req, &self.shaft_position_act);
+            let torque = self
+              .target_pid
+              .update_position(&self.shaft_position_req, &self.shaft_position_act);
             Ok((electrical_angle, torque))
           }
         }
@@ -199,7 +208,9 @@ impl FocSimple {
               let delta_angle = self.speed_act / 1000;
               self.shaft_position_req.inc(delta_angle);
             }
-            let requested_torque = self.target_pid.update_position(&self.shaft_position_req, &self.shaft_position_act);
+            let requested_torque = self
+              .target_pid
+              .update_position(&self.shaft_position_req, &self.shaft_position_act);
             Ok((electrical_angle, requested_torque))
           }
         }
@@ -230,24 +241,24 @@ impl FocSimple {
 
   #[inline]
   fn update_speed(&mut self) {
-      let req = self.speed_req;
-      if self.speed_acc == 0 {
-        self.speed_act = req;
-      } else {
-        let mut act = self.speed_act;
+    let req = self.speed_req;
+    if self.speed_acc == 0 {
+      self.speed_act = req;
+    } else {
+      let mut act = self.speed_act;
+      if act > req {
+        act -= self.speed_acc;
+        if act < req {
+          act = req;
+        }
+      } else if act < req {
+        act += self.speed_acc;
         if act > req {
-          act -= self.speed_acc;
-          if act < req {
-            act = req;
-          }
-        } else if act < req {
-          act += self.speed_acc;
-          if act > req {
-            act = req;
-          }
-        } // do nothing if equal
-        self.speed_act = act;
-      }
+          act = req;
+        }
+      } // do nothing if equal
+      self.speed_act = act;
+    }
   }
 
   /// Calculate the direction of the sensor in relation to the direction of the motor
@@ -277,10 +288,12 @@ impl FocSimple {
             if act.get_position() < 0 {
               // reverse the direction in the driver. Motor must run in the same dir as the sensor
               rprintln!("Direction inversed");
-              self.shaft_position_act.mark_inversed()
+              self.shaft_position_act.set_inversed(true);
             } else {
               rprintln!("Direction not inversed");
+              self.shaft_position_act.set_inversed(false);
             }
+
             self.calibration_state = ECalibrateState::FindOffset;
           }
         } else {
@@ -313,6 +326,6 @@ impl FocSimple {
         }
       }
     }
-    Ok((self.shaft_position_req.get_angle(), self.torque))
+    Ok((self.shaft_position_req.get_angle(), self.torque.abs()))
   }
 }

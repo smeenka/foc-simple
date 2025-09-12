@@ -10,7 +10,7 @@ edition = "2021"
 keywords = ["foc", "bldc", "motor", "vector-control"]
 license = "MIT OR Apache-2.0"
 name = "storm32"
-version = "0.1.0"
+version = "0.1.2"
 
 [dependencies]
 as5600 = {version = "0.8.0"}
@@ -26,7 +26,7 @@ panic-probe = {version = "1.0.0", features = ["print-defmt"]}
 rtt-target = {version = "0.6.1", features = []}
 smart-leds-trait = "0.2.1"
 
-foc-simple = {features = ["embassy"], path = "../../",version = "0.1.0"}
+foc-simple = {features = ["embassy"], path = "../../",version = "0.1.2"}
 
 [dependencies.embassy-executor]
 features = ["defmt", "executor-thread", "arch-cortex-m"]

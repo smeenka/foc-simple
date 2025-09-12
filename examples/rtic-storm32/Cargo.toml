@@ -9,7 +9,7 @@ categories = [
 edition = "2021"
 keywords = ["foc", "bldc", "motor", "vector-control", "nucleo-f103_cb", "rtic_2_0"]
 license = "MIT OR Apache-2.0"
-name = "rtic-f103-cb"
+name = "rtic-storm32"
 version = "0.1.2"
 
 [dependencies]

@@ -2,7 +2,6 @@ use fixed::types::I16F16;
 
 use crate::tools::shaft_position::ShaftPosition;
 
-
 /// A fixed-point PID controller.
 /// note that the time element is omitted. The delta time is very constant in the foc controller
 /// So this pid is only usable for this foc controller.
@@ -17,7 +16,7 @@ pub struct FocPid {
 
   last_measurement: I16F16,
   last_position: ShaftPosition,
-  ready: bool
+  ready: bool,
 }
 
 impl FocPid {
@@ -35,7 +34,7 @@ impl FocPid {
       last_position: ShaftPosition::new(),
       integral_max_n: -1 * I16F16::ONE,
       integral_max_p: 1 * I16F16::ONE,
-      ready: false
+      ready: false,
     }
   }
 
@@ -50,7 +49,7 @@ impl FocPid {
 
   /// Update the PID controller, returning the new output value.
   pub fn update(&mut self, setpoint: I16F16, measurement: I16F16) -> I16F16 {
-    let error = setpoint - measurement ;
+    let error = setpoint - measurement;
     let p = self.kp * error;
 
     let integral = (self.integral + error).clamp(self.integral_max_n, self.integral_max_p);
@@ -70,7 +69,6 @@ impl FocPid {
 
     p + i - d
   }
-
 
   pub fn update_position(&mut self, setpoint: &ShaftPosition, measurement: &ShaftPosition) -> I16F16 {
     let error = setpoint.compare(measurement);
@@ -94,10 +92,7 @@ impl FocPid {
 
     p + i - d
   }
-
-
 }
-
 
 /// A fixed-point PD controller.
 /// note that the time element is omitted. The delta time is very constant in the foc controller
@@ -107,7 +102,7 @@ pub struct FocPd {
   kp: I16F16,
   kd: I16F16,
   last_measurement: I16F16,
-  ready: bool
+  ready: bool,
 }
 
 impl FocPd {
@@ -120,16 +115,14 @@ impl FocPd {
       kp,
       kd,
       last_measurement: I16F16::ZERO,
-      ready: false
+      ready: false,
     }
   }
 
-
   /// Update the PID controller, returning the new output value.
   pub fn update(&mut self, setpoint: I16F16, measurement: I16F16) -> I16F16 {
-    let error = setpoint - measurement ;
+    let error = setpoint - measurement;
     let p = self.kp * error;
-
 
     let delta_m = if self.ready {
       measurement - self.last_measurement
