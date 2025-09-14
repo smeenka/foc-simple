@@ -10,8 +10,6 @@ use rtt_target::{rprintln, rtt_init_default};
 use stm32f1xx_hal::gpio::Pin;
 use stm32f1xx_hal::pac::EXTI;
 use stm32f1xx_hal::pac::TIM2;
-use stm32f1xx_hal::timer::PwmInput;
-use stm32f1xx_hal::timer::Tim2NoRemap;
 
 systick_monotonic!(Mono, 1000);
 
@@ -39,9 +37,9 @@ mod app {
     flash::FlashExt,
     gpio::{Edge, ExtiPin, GpioExt, Input, Output, PullUp, PushPull, PA0, PA10, PA2, PA4, PB2, PC13},
     pac::Peripherals,
-    rcc::{Clocks, RccExt},
+    rcc::{self,Clocks, RccExt},
     time::KiloHertz,
-    timer::{Channel, Configuration, PwmExt, ReadMode, Tim1NoRemap, Tim2NoRemap, Timer},
+    timer::{Channel, PwmExt, Tim1NoRemap, Tim2NoRemap, Timer},
   };
   /* bring dependencies into scope */
 
@@ -53,7 +51,6 @@ mod app {
   #[local]
   struct Local {
     led: PB2<Output<PushPull>>,
-    clocks: Clocks,
     foc_rtic: FocRtic<SensorAngleDummy, SensorCurrentImpl, PwmDriverImpl>,
     hall1: PA15<Input<PullUp>>,
     hall2: PB14<Input<PullUp>>,
@@ -65,9 +62,11 @@ mod app {
   fn init(mut cx: init::Context) -> (Shared, Local) {
     // Setup clocks
     let mut flash = cx.device.FLASH.constrain();
-    let rcc = cx.device.RCC.constrain();
-
-    let mut clocks = rcc.cfgr.use_hse(8.MHz()).sysclk(72.MHz()).pclk1(36.MHz()).freeze(&mut flash.acr);
+    let mut rcc = cx
+      .device
+      .RCC
+      .freeze(rcc::Config::hsi().sysclk(72.MHz()).pclk1(36.MHz()), &mut flash.acr);
+    let mut afio = cx.device.AFIO.constrain(&mut rcc);
 
     // Initialize Mono interrupt & clocks
     Mono::start(cx.core.SYST, 36_000_000);
@@ -76,10 +75,9 @@ mod app {
     rtt_target::set_print_channel(channels.up.0);
     rprintln!("init");
 
-    let mut gpioa = cx.device.GPIOA.split();
-    let mut gpiob = cx.device.GPIOB.split();
-    let mut gpioc = cx.device.GPIOC.split();
-    let mut afio = cx.device.AFIO.constrain();
+    let mut gpioa = cx.device.GPIOA.split(&mut rcc);
+    let mut gpiob = cx.device.GPIOB.split(&mut rcc);
+    let mut gpioc = cx.device.GPIOC.split(&mut rcc);
 
     let led = gpiob.pb2.into_push_pull_output(&mut gpiob.crl);
 
@@ -113,7 +111,10 @@ mod app {
     let eb0 = gpioc.pc11.into_push_pull_output(&mut gpioc.crh);
     let ec0 = gpioc.pc12.into_push_pull_output(&mut gpioc.crh);
 
-    let mut pwm = cx.device.TIM1.pwm_hz::<Tim1NoRemap, _, _>(pins, &mut afio.mapr, 25.kHz(), &mut clocks);
+    let mut pwm = cx
+      .device
+      .TIM1
+      .pwm_hz::<Tim1NoRemap, _, _>(pins, &mut afio.mapr, 25.kHz(), &mut rcc);
     pwm.enable(Channel::C1);
     pwm.enable(Channel::C2);
     pwm.enable(Channel::C3);
@@ -122,7 +123,14 @@ mod app {
     let max = channels.0.get_max_duty();
     rprintln!("Max duty:{}", max);
 
-    let mut pwm_driver = PwmDriverImpl::new(channels.0, channels.1, channels.2, ea0.erase(), eb0.erase(), ec0.erase());
+    let mut pwm_driver = PwmDriverImpl::new(
+      channels.0,
+      channels.1,
+      channels.2,
+      ea0.erase(),
+      eb0.erase(),
+      ec0.erase(),
+    );
     pwm_driver.enable();
     let mut foc_pwm = FocPwm::new(pwm_driver, EModulation::Sinusoidal, max, 0.4);
     let foc_simple = FocSimple::new(3);
@@ -136,7 +144,6 @@ mod app {
       Shared { position: 0 },
       Local {
         led,
-        clocks,
         foc_rtic,
         hall1,
         hall2,
@@ -182,7 +189,10 @@ mod app {
     let mut foc_rtic = cx.local.foc_rtic;
     //foc.set_foc_mode(EFocMode::Calibration(None)).unwrap();
     let param = FocParam::new_fp(0.05, 0.001, 0.0);
-    foc_rtic.get_foc().set_foc_mode(foc_simple::foc::EFocMode::Velocity(param)).unwrap();
+    foc_rtic
+      .get_foc()
+      .set_foc_mode(foc_simple::foc::EFocMode::Velocity(param))
+      .unwrap();
     foc_rtic.get_foc().set_speed(I16F16::TAU);
     foc_rtic.get_foc().set_acceleration(I16F16::ZERO);
     foc_rtic.get_foc().set_torque(I16F16::ONE / 4); // current torque, hall sensor and commands

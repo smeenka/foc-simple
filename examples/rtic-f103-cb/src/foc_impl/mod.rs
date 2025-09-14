@@ -38,7 +38,7 @@ impl FocSerial for FocSerialImpl {
     }
 
     fn send(&mut self, buffer: &[u8]) -> Result<()> {
-        match self.tx.bwrite_all(buffer) {
+        match self.tx.bwrite_all_u8(buffer) {
             Ok(()) => Ok(()),
             Err(_) => Err(EFocSimpleError::SerialError),
         }
